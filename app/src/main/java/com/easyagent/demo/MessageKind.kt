@@ -6,4 +6,5 @@ enum class MessageKind {
     Tool,
     System,
     Error
+
 }

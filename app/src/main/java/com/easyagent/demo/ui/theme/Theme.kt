@@ -20,6 +20,7 @@ private val LightColorScheme = lightColorScheme(
     surface = Color(0xFFFFFBFE),
     onBackground = Color(0xFF1C1B1F),
     onSurface = Color(0xFF1C1B1F),
+
 )
 
 private val DarkColorScheme = darkColorScheme(
@@ -31,14 +32,18 @@ private val DarkColorScheme = darkColorScheme(
     surface = Color(0xFF1C1B1F),
     onBackground = Color(0xFFE6E1E5),
     onSurface = Color(0xFFE6E1E5),
+
 )
 
 @Composable
+
 fun EasyAgentDemoTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit
+
 ) {
+
     val colorScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
@@ -47,9 +52,9 @@ fun EasyAgentDemoTheme(
         darkTheme -> DarkColorScheme
         else -> LightColorScheme
     }
-
     MaterialTheme(
         colorScheme = colorScheme,
         content = content
     )
+
 }

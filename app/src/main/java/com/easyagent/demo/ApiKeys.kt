@@ -11,6 +11,7 @@ import com.easyagent.brain.BrainProvider
  * - `EASY_AGENT_QWEN_API_KEY`
  * - `EASY_AGENT_DOUBAO_API_KEY`
  */
+
 object ApiKeys {
 
     fun forProvider(provider: BrainProvider): String = when (provider) {
@@ -33,4 +34,5 @@ object ApiKeys {
         }
         return "API Key 为空。请在 local.properties 配置 $propertyName 后 Sync + Rebuild，或在界面手动输入。"
     }
+
 }

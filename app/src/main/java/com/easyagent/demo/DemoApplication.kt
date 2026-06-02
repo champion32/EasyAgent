@@ -17,4 +17,5 @@ class DemoApplication : Application() {
             ChatDatabase.get(this@DemoApplication)
         }
     }
+
 }

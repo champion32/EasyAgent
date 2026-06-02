@@ -5,6 +5,7 @@ import com.easyagent.memory.Memory
 import java.util.concurrent.CopyOnWriteArrayList
 
 /** 可从持久化记录预加载的 Memory，用于恢复会话上下文。 */
+
 class RestoredMemory : Memory {
 
     private val messages = CopyOnWriteArrayList<Message>()
@@ -22,4 +23,5 @@ class RestoredMemory : Memory {
     override fun clear() {
         messages.clear()
     }
+
 }
