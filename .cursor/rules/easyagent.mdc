@@ -1,0 +1,14 @@
+---
+description: EasyAgent 项目上下文与模块边界（换机/新会话请先读 handoff）
+globs:
+  - "**/*"
+alwaysApply: true
+---
+
+# EasyAgent
+
+- 换机或长间隔开发：先读 `docs/vibecoding-handoff.md` 与 `docs/module-responsibility-boundaries.md`。
+- 模块边界：`easy-agent` = SDK（Brain/Planner/Tools/Memory）；`app` = Demo（Compose UI、Room、ViewModel）。
+- 默认 Provider：豆包（Responses API）；密钥在 `local.properties`，勿提交。
+- 回复语言：简体中文。
+- 改动保持最小 diff，匹配现有 Kotlin/Compose 风格。

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Easy Agent Demo</string>
+    <string name="hint_api_key">API Key（可留空，使用 local.properties 中的 BuildConfig 配置）</string>
+    <string name="hint_model">Model / Endpoint ID</string>
+    <string name="hint_model_doubao">豆包必填：模型 ID（如 deepseek-v3-2-251201）或 ep- 接入点</string>
+    <string name="hint_message">输入消息，例如：查看设备信息</string>
+    <string name="send">发送</string>
+    <string name="clear">清空</string>
+    <string name="provider">Provider</string>
+    <string name="planner_mode">Planner Mode</string>
+    <string name="demo_prompts">Demo 指令</string>
+    <string name="error_toast_hint">请求失败，完整错误见聊天列表 Error 消息与 Logcat 标签 EasyAgent</string>
+    <string name="sessions">会话列表</string>
+    <string name="new_session">新会话</string>
+    <string name="draft_session_hint">发送首条消息后保存</string>
+    <string name="open_sessions">打开会话列表</string>
+    <string name="empty_session_history">暂无消息，发送第一条消息开始对话</string>
+    <string name="token_usage_format">Token: %1$d 输入 / %2$d 输出 / %3$d 总计 · %4$d 次 API</string>
+</resources>

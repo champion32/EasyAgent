@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="purple_500">#6750A4</color>
+    <color name="purple_700">#4F378B</color>
+    <color name="teal_200">#03DAC5</color>
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+    <color name="user_bubble">#CDB4F7</color>
+    <color name="assistant_bubble">#C8D6EA</color>
+    <color name="tool_bubble">#FFD666</color>
+    <color name="error_bubble">#FFB4AB</color>
+</resources>

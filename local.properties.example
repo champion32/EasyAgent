@@ -1,0 +1,9 @@
+## Copy this file to local.properties and fill in your API keys.
+## local.properties is gitignored and will not be committed.
+
+sdk.dir=/path/to/Android/Sdk
+
+# EasyAgent Demo API Keys
+EASY_AGENT_OPENAI_API_KEY=
+EASY_AGENT_QWEN_API_KEY=
+EASY_AGENT_DOUBAO_API_KEY=
