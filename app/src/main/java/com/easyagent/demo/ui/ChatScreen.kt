@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
@@ -30,6 +31,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -91,6 +93,7 @@ import com.easyagent.planner.PlannerMode
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 private val demoPrompts = listOf(
@@ -103,7 +106,6 @@ private val demoPrompts = listOf(
 private val compactDropdownTextStyle
     @Composable get() = MaterialTheme.typography.labelSmall.copy(fontSize = 12.sp)
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatScreen(viewModel: ChatViewModel) {
     val messages by viewModel.messages.collectAsStateWithLifecycle()
@@ -131,14 +133,11 @@ fun ChatScreen(viewModel: ChatViewModel) {
     val scope = rememberCoroutineScope()
     val errorToastHint = stringResource(R.string.error_toast_hint)
 
-    // 首帧后再组合 Drawer / ConfigRow / DemoPrompt，加快首屏可见
     var secondaryContentReady by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         withFrameMillis { }
         secondaryContentReady = true
     }
-    val drawerOpen = drawerState.currentValue != DrawerValue.Closed ||
-        drawerState.targetValue != DrawerValue.Closed
 
     LaunchedEffect(currentSessionId, messages.size, streamingText) {
         if (messages.isEmpty() && streamingText == null) return@LaunchedEffect
@@ -155,20 +154,75 @@ fun ChatScreen(viewModel: ChatViewModel) {
         }
     }
 
+    val uiState = ChatScreenUiState(
+        messages = messages,
+        sessions = sessions,
+        isDraftSession = isDraftSession,
+        isLoading = isLoading,
+        streamingText = streamingText,
+        currentBrief = currentBrief,
+        inputText = inputText,
+        provider = provider,
+        plannerMode = plannerMode,
+        secondaryContentReady = secondaryContentReady
+    )
+
+    val actions = ChatScreenActions(
+        onInputChange = { inputText = it },
+        onProviderChange = { provider = it },
+        onPlannerModeChange = { plannerMode = it },
+        onSend = {
+            viewModel.sendMessage(
+                text = inputText,
+                provider = provider,
+                plannerMode = plannerMode
+            )
+            inputText = ""
+        },
+        onClear = { viewModel.clearChat() },
+        onNewSession = { viewModel.createNewSession() },
+        onSelectSession = { viewModel.selectSession(it) }
+    )
+
+    ChatScreenContent(
+        state = uiState,
+        actions = actions,
+        listState = listState,
+        snackbarHostState = snackbarHostState,
+        drawerState = drawerState,
+        scope = scope,
+        modifier = Modifier.fillMaxSize()
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ChatScreenContent(
+    state: ChatScreenUiState,
+    actions: ChatScreenActions,
+    listState: LazyListState = rememberLazyListState(),
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
+    drawerState: DrawerState = rememberDrawerState(DrawerValue.Closed),
+    scope: CoroutineScope = rememberCoroutineScope(),
+    modifier: Modifier = Modifier
+) {
+    val drawerOpen = drawerState.currentValue != DrawerValue.Closed ||
+        drawerState.targetValue != DrawerValue.Closed
+
     val chatBody: @Composable () -> Unit = {
         Scaffold(
-            modifier = Modifier.fillMaxSize(),
+            modifier = modifier,
             topBar = {
                 TopAppBar(
-                    title = { Text(currentBrief) },
+                    title = { Text(state.currentBrief) },
                     navigationIcon = {
                         IconButton(
                             onClick = {
-                                if (secondaryContentReady) {
+                                if (state.secondaryContentReady) {
                                     scope.launch { drawerState.open() }
                                 }
                             },
-                            enabled = secondaryContentReady
+                            enabled = state.secondaryContentReady
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Menu,
@@ -177,7 +231,7 @@ fun ChatScreen(viewModel: ChatViewModel) {
                         }
                     },
                     actions = {
-                        IconButton(onClick = { viewModel.createNewSession() }) {
+                        IconButton(onClick = actions.onNewSession) {
                             Icon(
                                 imageVector = Icons.Default.Add,
                                 contentDescription = stringResource(R.string.new_session)
@@ -195,18 +249,11 @@ fun ChatScreen(viewModel: ChatViewModel) {
             snackbarHost = { SnackbarHost(snackbarHostState) },
             bottomBar = {
                 ChatInputBar(
-                    text = inputText,
-                    onTextChange = { inputText = it },
-                    isLoading = isLoading,
-                    onSend = {
-                        viewModel.sendMessage(
-                            text = inputText,
-                            provider = provider,
-                            plannerMode = plannerMode
-                        )
-                        inputText = ""
-                    },
-                    onClear = { viewModel.clearChat() }
+                    text = state.inputText,
+                    onTextChange = actions.onInputChange,
+                    isLoading = state.isLoading,
+                    onSend = actions.onSend,
+                    onClear = actions.onClear
                 )
             }
         ) { innerPadding ->
@@ -215,22 +262,20 @@ fun ChatScreen(viewModel: ChatViewModel) {
                     .fillMaxSize()
                     .padding(innerPadding)
             ) {
-                if (secondaryContentReady) {
+                if (state.secondaryContentReady) {
                     ConfigRow(
-                        provider = provider,
-                        onProviderChange = { provider = it },
-                        plannerMode = plannerMode,
-                        onPlannerModeChange = { plannerMode = it }
+                        provider = state.provider,
+                        onProviderChange = actions.onProviderChange,
+                        plannerMode = state.plannerMode,
+                        onPlannerModeChange = actions.onPlannerModeChange
                     )
                 }
-
                 DemoPromptRow(
                     prompts = demoPrompts,
-                    onPromptClick = { inputText = it },
-                    visible = secondaryContentReady
+                    onPromptClick = actions.onInputChange,
+                    visible = state.secondaryContentReady
                 )
-
-                if (isLoading && streamingText == null) {
+                if (state.isLoading && state.streamingText == null) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -240,7 +285,6 @@ fun ChatScreen(viewModel: ChatViewModel) {
                         CircularProgressIndicator(modifier = Modifier.padding(4.dp))
                     }
                 }
-
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
@@ -249,7 +293,7 @@ fun ChatScreen(viewModel: ChatViewModel) {
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    if (messages.isEmpty() && streamingText == null) {
+                    if (state.messages.isEmpty() && state.streamingText == null) {
                         item(key = "empty_history") {
                             Text(
                                 text = stringResource(R.string.empty_session_history),
@@ -262,12 +306,12 @@ fun ChatScreen(viewModel: ChatViewModel) {
                         }
                     } else {
                         items(
-                            items = messages,
+                            items = state.messages,
                             key = { message -> message.id }
                         ) { message ->
                             ChatMessageCard(message = message)
                         }
-                        streamingText?.let { text ->
+                        state.streamingText?.let { text ->
                             item(key = "streaming_assistant") {
                                 ChatMessageCard(
                                     message = ChatMessage(
@@ -285,7 +329,7 @@ fun ChatScreen(viewModel: ChatViewModel) {
         }
     }
 
-    if (secondaryContentReady || drawerOpen) {
+    if (state.secondaryContentReady || drawerOpen) {
         ModalNavigationDrawer(
             drawerState = drawerState,
             drawerContent = {
@@ -295,14 +339,14 @@ fun ChatScreen(viewModel: ChatViewModel) {
                     tonalElevation = 3.dp
                 ) {
                     SessionDrawer(
-                        sessions = sessions,
-                        isDraftSelected = isDraftSession,
+                        sessions = state.sessions,
+                        isDraftSelected = state.isDraftSession,
                         onSessionClick = { sessionId ->
-                            viewModel.selectSession(sessionId)
+                            actions.onSelectSession(sessionId)
                             scope.launch { drawerState.close() }
                         },
                         onNewSession = {
-                            viewModel.createNewSession()
+                            actions.onNewSession()
                             scope.launch { drawerState.close() }
                         }
                     )
@@ -496,7 +540,6 @@ private fun <T> EnumDropdown(
     optionLabel: (T) -> String
 ) {
     var expanded by remember { mutableStateOf(false) }
-
     Column(modifier = modifier) {
         Text(
             text = label,
@@ -582,7 +625,6 @@ private fun ChatMessageCard(message: ChatMessage) {
     val darkTheme = isSystemInDarkTheme()
     val bubbleColor = bubbleColorFor(message.kind, darkTheme)
     val contentColor = contentColorFor(bubbleColor, darkTheme)
-
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
@@ -635,7 +677,6 @@ private fun ChatInputBar(
     onClear: () -> Unit
 ) {
     val canSend = !isLoading && text.isNotBlank()
-
     Row(
         modifier = Modifier
             .fillMaxWidth()
